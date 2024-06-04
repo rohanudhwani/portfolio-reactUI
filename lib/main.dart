@@ -1,6 +1,8 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:portfolio/firebase_options.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 void launchURL(String url) async {
   if (await canLaunch(url)) {
@@ -10,32 +12,48 @@ void launchURL(String url) async {
   }
 }
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  final Future<FirebaseApp> _initialization = Firebase.initializeApp();
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Navbar',
       theme: ThemeData(primarySwatch: Colors.blue, fontFamily: "Aksans"),
-      home: Scaffold(
-        backgroundColor: Color(0xFF23272F),
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(60.0),
-          child: MyAppBar(),
-        ),
-        body: SingleChildScrollView(
-          child: Column(
-            children: [
-              NameWidget(),
-              SkillsWidget(),
-              ExperienceWidget(),
-              ProjectsWidget(),
-            ],
-          ),
-        ),
+      home: FutureBuilder(
+        future: _initialization,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          }
+          if (snapshot.connectionState == ConnectionState.done) {
+            return Scaffold(
+              backgroundColor: Color(0xFF23272F),
+              appBar: PreferredSize(
+                preferredSize: Size.fromHeight(60.0),
+                child: MyAppBar(),
+              ),
+              body: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    NameWidget(),
+                    SkillsWidget(),
+                    ExperienceWidget(),
+                    ProjectsWidget(),
+                  ],
+                ),
+              ),
+            );
+          }
+          return CircularProgressIndicator();
+        },
       ),
     );
   }
